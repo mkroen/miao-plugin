@@ -38,6 +38,30 @@ export const cfgSchema = {
         def: false,
         miao: true
       },
+      challengeStory: {
+        title: '*虚构',
+        key: '虚构叙事',
+        def: true,
+        desc: '是否允许查看虚构叙事战绩'
+      },
+      challengeChaos: {
+        title: '*混沌',
+        key: '混沌回忆',
+        def: true,
+        desc: '是否允许查看混沌回忆战绩'
+      },
+      challengeBoss: {
+        title: '*末日',
+        key: '末日幻影',
+        def: true,
+        desc: '是否允许查看末日幻影战绩'
+      },
+      challengePeak: {
+        title: '*异相',
+        key: '异相仲裁',
+        def: true,
+        desc: '是否允许查看异相仲裁挑战数据'
+      },
       profileStat: {
         title: '#练度统计',
         key: '练度统计',

@@ -153,6 +153,11 @@ export default class MysApi {
     return await this.getData('spiralAbyss', { schedule_type: type })
   }
 
+  // 获取星铁混沌回忆详细信息
+  async getChallenge (type = 1) {
+    return await this.getData('challenge', { schedule_type: type })
+  }
+
   // 获取幻想真境剧诗信息
   async getRoleCombat (need_detail = false) {
     return await this.getData('role_combat', { need_detail: need_detail })
@@ -166,6 +171,21 @@ export default class MysApi {
   // 获取幽境危战赋光之人信息
   async getHardChallengePopularity () {
     return await this.getData('hard_challenge_popularity')
+  }
+
+  // 获取星铁虚构叙事信息
+  async getChallengeStory (type = 1) {
+    return await this.getData('challengeStory', { schedule_type: type })
+  }
+
+  // 获取星铁末日幻影信息
+  async getChallengeBoss (type = 1) {
+    return await this.getData('challengeBoss', { schedule_type: type })
+  }
+
+  // 获取星铁异相仲裁信息
+  async getChallengePeak (type = 1) {
+    return await this.getData('challengePeak', { schedule_type: type })
   }
 
   async getDetail (id) {

@@ -8,6 +8,8 @@ import { AbyssSummary } from './stat/AbyssSummary.js'
 import { RoleCombatSummary } from './stat/RoleCombatSummary.js'
 import { RoleCard } from './stat/RoleCard.js'
 import { HardChallengeSummary } from './stat/HardChallengeSummary.js'
+import { ChallengePeak } from './stat/ChallengePeak.js'
+import { ChallengeMode } from './stat/ChallengeMode.js'
 import { App } from '#miao'
 
 let app = App.init({
@@ -50,6 +52,16 @@ app.reg({
     rule: /^#*(喵喵)*(本期|上期)?(幽境|危战|幽境危战)(单人|单挑|组队|多人|合作|最佳)?[ |0-9]*(数据)?$/,
     fn: HardChallengeSummary,
     desc: '幽境危战'
+  },
+  ChallengeMode: {
+    rule: /^(?:#*星铁|\*)(本期|上期)?(混沌|混沌回忆|忘却之庭|虚构|虚构叙事|末日|末日幻影)[ |0-9]*(数据)?$/,
+    fn: ChallengeMode,
+    desc: '混沌回忆、虚构叙事、末日幻影'
+  },
+  ChallengePeak: {
+    rule: /^#*星铁(本期|上期)?(异相|仲裁|异相仲裁)[ |0-9]*(数据)?$/,
+    fn: ChallengePeak,
+    desc: '异相仲裁'
   }
 })
 export default app

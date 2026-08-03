@@ -1,0 +1,117 @@
+{{extend defaultLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/common.css?v=1.0"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/common/tpl.css?v=1.0"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/challenge-peak.css?v=1.0"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/challenge-mode.css?v=8.3"/>
+{{/block}}
+
+{{block 'main'}}
+<div class="head-box type">
+  <div class="title">*{{challengeMode.title}}</div>
+  <div class="uid">UID:{{uid}}</div>
+</div>
+<div class="time">统计周期：{{timeCalc(group.begin_time)}} - {{timeCalc(group.end_time)}}</div>
+
+<div class="info_box challenge-mode-info">
+  <div class="hard-battle-cont">
+    <div class="hard-battle mode-overview">
+      <div class="mode-star-summary">
+        <div class="mode-star-item">
+          <img src="{{_res_path}}/stat/imgs/challenge/mode/star.png"/>
+          <strong>{{star_num || 0}}</strong>
+        </div>
+        {{if extra_star_num}}
+        <div class="mode-star-item extra">
+          <img src="{{_res_path}}/stat/imgs/challenge/mode/extra-star.png"/>
+          <strong>{{extra_star_num}}</strong>
+        </div>
+        {{/if}}
+      </div>
+      <div class="battle-total">
+        <div class="total-name">{{periodText}}{{challengeMode.title}}</div>
+        <div class="total-num">挑战次数：{{battle_num || 0}}</div>
+      </div>
+    </div>
+  </div>
+
+  {{set talentMap=['a','e','q'] }}
+  {{each floors floor}}
+  <div class="boss-title floor-title">
+    <span>{{floor.name}}</span>
+    <div class="floor-result">
+      <div class="floor-stars">
+        {{each Array(floor.baseStarNum)}}<img src="{{_res_path}}/stat/imgs/challenge/mode/star.png"/>{{/each}}
+        {{each Array(floor.extraStarNum)}}<img class="extra" src="{{_res_path}}/stat/imgs/challenge/mode/extra-star.png"/>{{/each}}
+      </div>
+      {{if floor.hasRoundNum}}<span class="floor-round">使用轮次 {{floor.roundNum}}</span>{{/if}}
+      {{if floor.totalScore}}<strong>{{challengeMode.key === 'story' ? '总积分' : '总分'}} {{numberFormat(floor.totalScore)}}</strong>{{/if}}
+    </div>
+  </div>
+
+  <div class="mob-cont mode-floor">
+    {{each floor.nodes node nodeIdx}}
+    <div class="mob-body">
+      <div class="mob-name">
+        <span>{{node.label}}</span>
+        <div class="mob-record">
+          {{if node.hasScore}}<span>分数 {{numberFormat(node.scoreNum)}}</span>{{/if}}
+          <span class="node-time">{{timeDetail(node.challenge_time)}}</span>
+        </div>
+      </div>
+      <div class="mob-list">
+        <div class="mob-team">
+          {{set current_avatars=node.avatarCards || []}}
+          {{each current_avatars avatar idx}}
+          {{set weapon=avatar.weapon || {} }}
+          {{set talent=avatar.talent || {} }}
+          <div class="avatar-card elem-{{avatar.elem}} avatar-{{avatar.name}} card-mini">
+            <div class="card">
+              <div class="avatar-face item-icon star{{avatar.star==4?4:5}}">
+                <img class="challenge-direct-avatar" src="{{_res_path}}{{avatar.face}}"/>
+                <span class="cons cons-{{avatar.cons}} mini">{{avatar.cons}}</span>
+                <div class="avatar-level"><span>Lv</span>{{avatar.level}} {{avatar.abbr}}</div>
+              </div>
+              <div class="avatar-info">
+                {{if talent.a?.level}}
+                <div class="avatar-talent">
+                  {{each talentMap k}}
+                  {{set t=talent[k] || {} }}
+                  <span class="talent-item talent-{{k}} talent-{{t.original===10?'crown':'none'}} talent-{{t.level>t.original?'plus':'none'}}">{{t.level}}</span>
+                  {{/each}}
+                </div>
+                {{/if}}
+                <div class="line"></div>
+                <div class="avatar-detail">
+                  {{if weapon.img}}
+                  <div class="item avatar-weapon">
+                    <div class="item-icon star{{weapon.star}}">
+                      <img class="challenge-direct-item" src="{{_res_path}}{{weapon.img}}"/>
+                      <span class="cons cons-{{weapon.affix > 4 ? weapon.affix + 1 : weapon.affix}}">{{weapon.affix}}</span>
+                    </div>
+                  </div>
+                  {{/if}}
+                  {{if avatar.artisSet?.imgs?.length}}
+                  <div class="item avatar-artis artis{{avatar.artisSet.imgs.length}}">
+                    <div class="artis item-icon">
+                      {{each avatar.artisSet.imgs img}}
+                      <img class="challenge-direct-item" src="{{_res_path}}{{img}}"/>
+                      {{/each}}
+                    </div>
+                  </div>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+    {{if nodeIdx !== floor.nodes.length - 1}}<div class="line"></div>{{/if}}
+    {{/each}}
+  </div>
+  {{/each}}
+</div>
+{{/block}}

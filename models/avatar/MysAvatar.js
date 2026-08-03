@@ -1,6 +1,6 @@
 import lodash from 'lodash'
 import moment from 'moment'
-import { Data } from '#miao'
+import { Data, Format } from '#miao'
 import { chestInfo } from '../../resources/meta-gs/info/index.js'
 import AvatarUtil from './AvatarUtil.js'
 
@@ -64,34 +64,41 @@ const MysAvatar = {
    * @param charData
    */
   setMysCharData (player, charData) {
-    if (charData && charData.avatars) {
+    const avatars = player.isGs ? charData?.avatars : charData?.avatar_list
+    if (Array.isArray(avatars)) {
       let role = charData.role || {}
       player.setBasicData({
         level: role.level,
         name: role.nickname
       })
       let charIds = {}
-      lodash.forEach(charData.avatars, (ds) => {
-        let avatar = Data.getData(ds, 'id,level,cons:actived_constellation_num,fetter')
-        avatar.elem = ds.element.toLowerCase()
+      lodash.forEach(avatars, (ds) => {
+        const avatarKeys = player.isGs ? 'id,level,cons:actived_constellation_num,fetter' : 'id,level,cons:rank'
+        let avatar = Data.getData(ds, avatarKeys)
+        avatar.elem = player.isGs ? ds.element.toLowerCase() : Format.elem(ds.element, '', 'sr')
         // 处理时装数据
         let costume = (ds?.costumes || [])[0]
-        if (costume && costume.id) {
+        if (player.isGs && costume?.id) {
           avatar.costume = costume.id
         }
-        avatar.weapon = Data.getData(ds.weapon, 'name,star:rarity,level,promote:promote_level,affix:affix_level')
+        const weaponKeys = player.isGs
+          ? 'name,star:rarity,level,promote:promote_level,affix:affix_level'
+          : 'name,star:rarity,level,promote:promotion,affix:rank'
+        avatar.weapon = Data.getData(ds.weapon || ds.equip, weaponKeys)
         // 处理圣遗物数据
-        let artis = {}
-        lodash.forEach(ds.reliquaries, (re) => {
-          const posIdx = { 生之花: 1, 死之羽: 2, 时之沙: 3, 空之杯: 4, 理之冠: 5 }
-          if (re && re.name && posIdx[re.pos_name]) {
-            artis[posIdx[re.pos_name]] = {
-              name: re.name,
-              level: re.level
+        if (player.isGs) {
+          let artis = {}
+          lodash.forEach(ds.reliquaries, (re) => {
+            const posIdx = { 生之花: 1, 死之羽: 2, 时之沙: 3, 空之杯: 4, 理之冠: 5 }
+            if (re && re.name && posIdx[re.pos_name]) {
+              artis[posIdx[re.pos_name]] = {
+                name: re.name,
+                level: re.level
+              }
             }
-          }
-        })
-        avatar.artis = artis
+          })
+          avatar.artis = artis
+        }
         player.setAvatar(avatar, 'mys')
         charIds[avatar.id] = true
       })
