@@ -4,7 +4,7 @@
 <link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/common.css?v=1.0"/>
 <link rel="stylesheet" type="text/css" href="{{_res_path}}/common/tpl.css?v=1.0"/>
 <link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/challenge-peak.css?v=1.0"/>
-<link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/challenge-mode.css?v=8.3"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/stat/challenge-mode.css?v=8.4"/>
 {{/block}}
 
 {{block 'main'}}
@@ -22,10 +22,10 @@
           <img src="{{_res_path}}/stat/imgs/challenge/mode/star.png"/>
           <strong>{{star_num || 0}}</strong>
         </div>
-        {{if extra_star_num}}
+        {{if obtainedExtraStarNum}}
         <div class="mode-star-item extra">
           <img src="{{_res_path}}/stat/imgs/challenge/mode/extra-star.png"/>
-          <strong>{{extra_star_num}}</strong>
+          <strong>{{obtainedExtraStarNum}}</strong>
         </div>
         {{/if}}
       </div>
@@ -50,6 +50,11 @@
     </div>
   </div>
 
+  {{if floor.isQuickClear}}
+  <div class="mob-cont mode-floor mode-quick-clear">
+    <strong>快速完成</strong>
+  </div>
+  {{else}}
   <div class="mob-cont mode-floor">
     {{each floor.nodes node nodeIdx}}
     <div class="mob-body">
@@ -112,6 +117,7 @@
     {{if nodeIdx !== floor.nodes.length - 1}}<div class="line"></div>{{/if}}
     {{/each}}
   </div>
+  {{/if}}
   {{/each}}
 </div>
 {{/block}}

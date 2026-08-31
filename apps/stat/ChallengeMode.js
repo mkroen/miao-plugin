@@ -36,10 +36,24 @@ function getPeriodGroup (groups, floors, type) {
   return groups?.find(group => Number(group.schedule_id) === scheduleId) || groups?.[type - 1] || groups?.[0] || {}
 }
 
+function getFloorStarData (floor) {
+  const starNum = Math.max(Number(floor?.star_num || 0), 0)
+  const baseStarNum = Math.min(starNum, 3)
+  const extraStarLimit = floor?.is_tierce
+    ? Math.max(Number(floor?.extra_star_num || 0), 0)
+    : 0
+  return {
+    starNum,
+    baseStarNum,
+    extraStarNum: Math.min(Math.max(starNum - baseStarNum, 0), extraStarLimit)
+  }
+}
+
 function getFloorData (floors, group) {
   const bossKeys = ['upper_boss', 'lower_boss', 'tierce_boss']
   const labels = ['节点1', '节点2', '节点3']
   return lodash.map(floors, floor => {
+    const starData = getFloorStarData(floor)
     const nodes = [floor.node_1, floor.node_2, floor.node_3]
       .map((node, index) => {
         if (!node || (index === 2 && !floor.is_tierce)) {
@@ -47,8 +61,13 @@ function getFloorData (floors, group) {
         }
         const hasScore = node.score !== undefined && node.score !== null && node.score !== ''
         const scoreNum = Number(node.score || 0)
-        const hasDetail = Boolean(node.buff || node.avatars?.length || hasScore || node.boss_defeated)
-        if (!hasDetail) {
+        const hasBattleData = Boolean(
+          node.buff ||
+          node.avatars?.length ||
+          node.boss_defeated ||
+          scoreNum > 0
+        )
+        if (!hasBattleData) {
           return false
         }
         return {
@@ -62,9 +81,8 @@ function getFloorData (floors, group) {
       .filter(Boolean)
     return {
       ...floor,
-      starNum: Number(floor.star_num || 0),
-      extraStarNum: Number(floor.extra_star_num || 0),
-      baseStarNum: Math.max(Number(floor.star_num || 0) - Number(floor.extra_star_num || 0), 0),
+      ...starData,
+      isQuickClear: starData.baseStarNum === 3 && nodes.length === 0,
       hasRoundNum: floor.round_num !== undefined && floor.round_num !== null,
       roundNum: Number(floor.round_num || 0),
       totalScore: lodash.sumBy(nodes, 'scoreNum'),
@@ -76,7 +94,7 @@ function getFloorData (floors, group) {
 }
 
 function getDisplayFloors (floors, mode) {
-  const detailed = floors.filter(floor => floor.nodes.length)
+  const detailed = floors.filter(floor => floor.nodes.length || floor.isQuickClear)
   if (!mode.floorLimit) {
     return detailed
   }
@@ -138,6 +156,7 @@ export async function ChallengeMode (e) {
     : getPeriodGroup(data.groups, floors, type)
   const floorData = getFloorData(floors, group)
   const displayFloors = getDisplayFloors(floorData, mode)
+  const obtainedExtraStarNum = lodash.sumBy(floorData, 'extraStarNum')
   const player = Player.create(e, 'sr')
   player.setMysCharData(characterData)
 
@@ -190,6 +209,7 @@ export async function ChallengeMode (e) {
     periodText,
     group,
     floors: displayFloors,
+    obtainedExtraStarNum,
     avatars,
     Array: (num) => Number.isInteger(Number(num)) && Number(num) > 0 ? Array(Math.min(Number(num), 20)) : [],
     timeCalc: (time) => time?.year
@@ -202,4 +222,4 @@ export async function ChallengeMode (e) {
   }, { e, scale: 1.4 })
 }
 
-export { getChallengeMode, getChaosPeriodGroup, getDisplayFloors, getFloorData, getPeriodGroup, modes }
+export { getChallengeMode, getChaosPeriodGroup, getDisplayFloors, getFloorData, getFloorStarData, getPeriodGroup, modes }

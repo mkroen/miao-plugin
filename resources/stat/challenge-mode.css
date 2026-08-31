@@ -134,6 +134,16 @@
   margin: 0 24px;
 }
 
+.mode-floor.mode-quick-clear {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  justify-content: center;
+  color: #e7cf9c;
+  font-size: 24px;
+  letter-spacing: 5px;
+}
+
 .avatar-card img.challenge-direct-avatar,
 .avatar-card img.challenge-direct-item {
   display: block;
