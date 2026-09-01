@@ -168,6 +168,7 @@ export default class MysApi {
     if (this.mys) {
       return this.mys
     }
+    option.device ||= this.ckUser?.device
     this.mys = await e.runtime.getMysApi(targetType, option, e.isSr)
     return this.mys
   }
