@@ -5,7 +5,6 @@ import moment from '../../components/Moment.js'
 import lodash from 'lodash'
 import fetch from 'node-fetch'
 import * as cheerio from 'cheerio'
-import common from '../../../../lib/common/common.js'
 
 const ProfileStat = {
   async stat (e) {
@@ -608,8 +607,6 @@ const ProfileStat = {
 
     
     let filterFunc = (x) => true
-    // 图片合并到同一条转发消息
-    let roleCombatText = null
     if (isRole) {
       let infoSource = Cfg.get('roleCharInfoSource', 1)
       let datasetName
@@ -678,8 +675,9 @@ const ProfileStat = {
       let invitationCharacterIds = ProfileStat.extractInvitationCharacterIds(currentMazeData)
       let elements = ProfileStat.extractElements(currentMazeData)
       
-      // 改为收集文字
-      roleCombatText = ProfileStat.sendRoleCombatInfo(e, elements, initialCharacterIds, invitationCharacterIds, monsterInfo)
+      const roleCombatText = ProfileStat.sendRoleCombatInfo(e, elements, initialCharacterIds, invitationCharacterIds, monsterInfo)
+
+      await e.reply(`幻想真境剧诗 · 角色练度统计\n${roleCombatText}`)
 
       avatarRet = ProfileStat.mergeStart(avatarRet, initialCharacterIds)
       filterFunc = ProfileStat.getRoleFilterFunc(e, elements, invitationCharacterIds)
@@ -744,17 +742,6 @@ const ProfileStat = {
       game
     }, { e, scale: 1.4, retType: 'base64' })
     // puppeteer.screenshot 已用 segment.image 包过
-    if (roleCombatText && imgBase64) {
-      const forwardMsgs = [
-        roleCombatText,
-        imgBase64
-      ]
-      const forwardMsg = await common.makeForwardMsg(e, forwardMsgs, `幻想真境剧诗 · 角色练度统计`)
-      await e.reply(forwardMsg)
-      return true
-    }
-
-    // 其他模式维持原行为
     return await e.reply(imgBase64)
   }
 }
