@@ -75,7 +75,7 @@ const componentOverrides = {
     component: 'Select',
     componentProps: {
       options: [
-        { label: '1 - HomDGCat数据库（已阵亡）', value: 1 },
+        { label: '1 - 玉璃数据库', value: 1 },
         { label: '2 - BWiki数据库（不建议使用）', value: 2 },
         { label: '3 - hakush.in数据库（已阵亡）', value: 3 },
         { label: '4 - nanoka.cc数据库（默认）', value: 4 }

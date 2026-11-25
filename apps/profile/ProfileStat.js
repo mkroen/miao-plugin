@@ -1,3 +1,4 @@
+import { loadAliothTheater } from './AliothTheater.js'
 import { Common, Cfg } from '#miao'
 import { MysApi, Player, Character } from '#miao.models'
 import moment from '../../components/Moment.js'
@@ -138,84 +139,6 @@ const ProfileStat = {
     return response;
   },
 
-  async getOverallMazeData() {
-    const request_url = 'https://homdgcat.wiki/gi/CH/maze.js'
-    let resData = false
-    try {
-        resData = await (await ProfileStat.fetchWithTimeout(request_url)).text()
-    } catch (error) {
-        logger.error('请求失败:', error)
-        return false // 直接返回以停止后续逻辑
-    }
-    let match = /var _overall = (.*?)var/s.exec(resData)
-    let overallMazeData = []
-    if (match) {
-      overallMazeData = JSON.parse(match[1])
-    } else {
-      logger.error('响应内容格式不对劲')
-      return false
-    }
-
-    match = /var _mp = (.*?)var/s.exec(resData)
-    let levelMapping = {}
-    if (match) {
-      levelMapping = JSON.parse(match[1])
-    } else {
-      logger.error('响应内容格式不对劲')
-      return false
-    }
-
-    match = /var _mons = (.*?)var/s.exec(resData)
-    let monsterMapping = {}
-    if (match) {
-      monsterMapping = JSON.parse(match[1])
-    } else {
-      logger.error('响应内容格式不对劲')
-      return false
-    }
-
-    return { overallMazeData, levelMapping, monsterMapping }
-  },
-
-  getMonsterInfo(currentMazeData, levelMapping, monsterMapping) {
-    let chambers = currentMazeData.Chambers
-    let displayedChambers = {
-      '第三幕': chambers[0][2],
-      '第六幕': chambers[1][2],
-      '第八幕': chambers[2][1],
-      '第十幕': chambers[3][1],
-      '圣牌挑战 I': chambers[4][0],
-      '圣牌挑战 II': chambers[4][1]
-    }
-    let monsterInfo = []
-    for (let [k, v] of Object.entries(displayedChambers)) {
-      if (v) {
-        let chamberInfo = `${k}：`
-        let levelId = v.Configs[0]
-        let time = v.Time
-        if (levelId) {
-          let monsterIds = levelMapping[Number(levelId)]
-          if (monsterIds) {
-            let monsterNames = []
-            for (let monsterId of monsterIds) {
-              let monsterName = monsterMapping[Number(monsterId)].Name
-              if (monsterName) {
-                // 处理：删掉所有的 html 标签
-                // e.g., <color style='color:#80C0FF;'>(水)</color><color style='color:#FFE699;'>古岩龙蜥</color>
-                monsterName = monsterName.replace(/<.*?>/g, '')
-                monsterNames.push(monsterName)
-              }
-            }
-            chamberInfo += monsterNames.join('、')
-            chamberInfo += `（${time}）`
-          }
-        }
-        monsterInfo.push(chamberInfo)
-      }
-    }
-    return monsterInfo.join('\n')
-  },
-
   sendRoleCombatInfo(e, elements, initialCharacterIds, invitationCharacterIds, monsterInfo) {
     let response = [
       ProfileStat.getElementInfo(elements),
@@ -305,7 +228,7 @@ const ProfileStat = {
           }
       });
       
-      // 转换成和 HomDGCat 相同的格式
+      // 转换为角色筛选所需的格式
       const elementConvertingMapping = {
         '风': 'Wind',
         '岩': 'Rock',
@@ -326,7 +249,7 @@ const ProfileStat = {
           initialAvatarIds.push(avatarId);
       });
 
-      // 转换成和 HomDGCat 相同的格式
+      // 转换为角色筛选所需的格式
       const convertedInitialAvatarIds = lodash.map(initialAvatarIds, (id) => ({'ID': id - 10000000}))
 
       // 存储特邀角色的数组
@@ -338,7 +261,7 @@ const ProfileStat = {
           invitationAvatarIds.push(avatarId);
       });
 
-      // 转换成和 HomDGCat 相同的格式
+      // 转换为角色筛选所需的格式
       const convertedInvitationAvatarIds = lodash.map(invitationAvatarIds, (id) => ({'ID': id - 10000000}))
 
       return {
@@ -383,7 +306,7 @@ const ProfileStat = {
           logger.error('请求失败:', error)
           return false // 直接返回以停止后续逻辑
       }
-      // 转换成和 HomDGCat 相同的格式
+      // 转换为角色筛选所需的格式
       const convertedInitialAvatarIds = lodash.map(
         currentRawMazeData.AvatarConfig.BuffAvatarList, (item) => ({'ID': item.Id - 10000000}))
       const convertedInvitationAvatarIds = lodash.map(
@@ -472,7 +395,7 @@ const ProfileStat = {
           logger.error('请求失败:', error)
           return false // 直接返回以停止后续逻辑
       }
-      // 转换成和 HomDGCat 相同的格式
+      // 转换为角色筛选所需的格式
       const convertedInitialAvatarIds = lodash.map(
         currentRawMazeData.avatar_config.buff_avatar_list, (item) => ({'ID': item.id - 10000000}))
       const convertedInvitationAvatarIds = lodash.map(
@@ -691,13 +614,19 @@ const ProfileStat = {
       let infoSource = Cfg.get('roleCharInfoSource', 1)
       let datasetName
       let overallMazeData
-      let levelMapping, monsterMapping
+      let currentMazeData
+      let monsterInfo = null
       if (infoSource == 1) {
-        datasetName = 'HomDGCat'
-        const mazeData = await ProfileStat.getOverallMazeData() // data
-        overallMazeData = mazeData.overallMazeData
-        levelMapping = mazeData.levelMapping
-        monsterMapping = mazeData.monsterMapping
+        datasetName = '玉璃'
+        try {
+          const result = await loadAliothTheater(e.msg, ProfileStat.fetchWithTimeout)
+          if (result.error) return e.reply(result.error)
+          currentMazeData = result.data
+          monsterInfo = result.info
+        } catch (error) {
+          logger.error('玉璃剧诗查询失败:', error)
+          return e.reply('请求玉璃数据库出错，请稍后再试。')
+        }
       } else if (infoSource == 2) {
         datasetName = 'BWiki'
         overallMazeData = await ProfileStat.getOverallMazeLinkFromBWiki() // links
@@ -708,15 +637,11 @@ const ProfileStat = {
         datasetName = 'nanoka.cc'
         overallMazeData = await ProfileStat.getOverallMazeDataFromNanokaCc() // version & data
       }
-      if (!overallMazeData) {
+      if (infoSource != 1 && !overallMazeData) {
         e.reply(`请求 ${datasetName} 数据库出错`)
         return false
       }
-      let currentMazeData
-      let monsterInfo = null
-      if (infoSource == 1) {
-        currentMazeData = ProfileStat.extractRequestedMazeData(e, overallMazeData)
-      } else if (infoSource == 2) {
+      if (infoSource == 2) {
         currentMazeData = await ProfileStat.getRequestedMazeDataFromBWiki(e, overallMazeData)
       } else if (infoSource == 3) {
         currentMazeData = await ProfileStat.getRequestedMazeDataFromHakushIn(e, overallMazeData)
@@ -741,9 +666,7 @@ const ProfileStat = {
         return false
       }
       // 获取怪物信息
-      if (infoSource == 1) {
-        monsterInfo = ProfileStat.getMonsterInfo(currentMazeData, levelMapping, monsterMapping)
-      } else if (infoSource == 2) {
+      if (infoSource == 2) {
         // TODO
       } else if (infoSource == 3) {
         monsterInfo = ProfileStat.getMonsterInfoFromHakushIn(currentMazeData)
